@@ -6,11 +6,11 @@ import pandas as pd
 from datetime import datetime, timedelta
 from typing import List
 
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from fastapi import FastAPI, HTTPException # type: ignore
+from fastapi.responses import StreamingResponse # type: ignore
+from pydantic import BaseModel, Field # type: ignore
 from binance.client import Client
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.cors import CORSMiddleware # type: ignore
 from jinja2 import Environment, FileSystemLoader
 
 # --- Modelo de Dados (Pydantic) ---
