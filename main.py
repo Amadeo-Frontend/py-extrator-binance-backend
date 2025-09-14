@@ -1,9 +1,9 @@
-# backend/main.py (VERSÃO CORRIGIDA E FINAL)
+# backend/main.py (VERSÃO FINAL COM O ENDPOINT DE ATIVOS)
 
 import io
 import zipfile
 import pandas as pd
-from datetime import datetime, timedelta # Importa timedelta
+from datetime import datetime, timedelta
 from typing import List
 
 from fastapi import FastAPI, HTTPException
@@ -43,17 +43,12 @@ app.add_middleware(
 def fetch_binance_data(asset: str, interval: str, start_date: str, end_date: str) -> pd.DataFrame:
     """Busca dados históricos para um único ativo e intervalo, garantindo dias completos."""
     client = Client()
-
-    ### MUDANÇA 1: Garantir que o dia final seja totalmente incluído ###
-    # Converte a string da data final para um objeto datetime
     end_date_obj = datetime.strptime(end_date, '%Y-%m-%d')
-    # Adiciona um dia para garantir que todos os dados do último dia selecionado sejam incluídos
     end_date_inclusive = (end_date_obj + timedelta(days=1)).strftime('%Y-%m-%d')
     
     print(f"Buscando: {asset}, Intervalo: {interval}, de {start_date} até o fim de {end_date}")
 
     try:
-        # Usa a data final ajustada na chamada da API
         klines = client.get_historical_klines(asset, interval, start_date, end_date_inclusive)
         if not klines: return pd.DataFrame()
 
@@ -65,7 +60,6 @@ def fetch_binance_data(asset: str, interval: str, start_date: str, end_date: str
         df[numeric_cols] = df[numeric_cols].apply(pd.to_numeric, axis=1)
         df['Resultado'] = df.apply(lambda row: 'Call' if row['Close'] >= row['Open'] else 'Put', axis=1)
         
-        # Filtra para garantir que não pegamos dados do dia seguinte
         df = df[df['Open_Time'] < end_date_inclusive]
         
         return df[['Open_Time', 'Open', 'High', 'Low', 'Close', 'Volume', 'Resultado']]
@@ -85,8 +79,6 @@ def analisar_tecnica_gatilho(df: pd.DataFrame):
         vela_atual = df.iloc[i]
         minuto_atual = vela_atual['Open_Time'].minute
 
-        ### MUDANÇA 2: Remove a condição 'and ultimo_resultado_foi_loss' ###
-        # Agora, a análise acontece em TODAS as velas de gatilho.
         if minuto_atual in minutos_gatilho:
             if i + 4 >= len(df):
                 i += 1
@@ -109,21 +101,38 @@ def analisar_tecnica_gatilho(df: pd.DataFrame):
                 'Resultado_Final': resultado_final_sequencia
             })
             
-            # Pula para a próxima vela após a vela de gatilho para evitar reanálise
             i += 1
             continue
         i += 1
     return pd.DataFrame(resultados)
 
-# --- ENDPOINTS DA API (sem alterações aqui) ---
+# --- ENDPOINTS DA API ---
 
 @app.get("/", summary="Verifica o status da API")
 def read_root():
-    return {"status": "API online. Use os endpoints /download-data/ ou /analise-tecnica-gatilho/."}
+    return {"status": "API online. Use os endpoints corretos."}
+
+# ### NOVO ENDPOINT ADICIONADO AQUI ###
+@app.get("/available-assets/", summary="Lista todos os ativos USDT da Binance")
+def get_available_assets():
+    """
+    Busca e retorna uma lista de todos os símbolos de trading que terminam com 'USDT' na Binance.
+    """
+    try:
+        client = Client()
+        exchange_info = client.get_exchange_info()
+        symbols = sorted([
+            s['symbol'] 
+            for s in exchange_info['symbols'] 
+            if s['status'] == 'TRADING' and s['symbol'].endswith('USDT')
+        ])
+        return {"assets": symbols}
+    except Exception as e:
+        print(f"Erro ao buscar informações da exchange: {e}")
+        raise HTTPException(status_code=500, detail="Não foi possível buscar a lista de ativos da Binance.")
 
 @app.post("/download-data/", summary="Extrator de Dados Genérico")
 async def endpoint_download_data(data: RequestData):
-    # ... (código deste endpoint permanece o mesmo)
     zip_buffer = io.BytesIO()
     found_data = False
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
@@ -144,7 +153,6 @@ async def endpoint_download_data(data: RequestData):
 
 @app.post("/analise-tecnica-gatilho/", summary="Analisador de Técnica de Gatilho")
 async def endpoint_analise_gatilho(data: RequestData):
-    # ... (código deste endpoint permanece o mesmo)
     asset = data.assets[0]
     df_historico = fetch_binance_data(asset, '1m', data.start_date, data.end_date)
     if df_historico.empty:
