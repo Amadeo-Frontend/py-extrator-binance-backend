@@ -1,9 +1,9 @@
-# backend/main.py
+# backend/main.py (VERSÃO CORRIGIDA E FINAL)
 
 import io
 import zipfile
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta # Importa timedelta
 from typing import List
 
 from fastapi import FastAPI, HTTPException
@@ -14,12 +14,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from jinja2 import Environment, FileSystemLoader
 
 # --- Modelo de Dados (Pydantic) ---
-# Define a estrutura dos dados que o front-end pode enviar.
 class RequestData(BaseModel):
-    assets: List[str] = Field(..., min_length=1, description="Lista de ativos, ex: ['BTCUSDT', 'ETHUSDT']")
-    intervals: List[str] = Field(..., min_length=1, description="Lista de timeframes, ex: ['1m', '5m']")
-    start_date: str = Field(..., description="Data de início no formato YYYY-MM-DD")
-    end_date: str = Field(..., description="Data de fim no formato YYYY-MM-DD")
+    assets: List[str] = Field(..., min_length=1)
+    intervals: List[str] = Field(..., min_length=1)
+    start_date: str
+    end_date: str
 
 # --- Configuração da API ---
 app = FastAPI(
@@ -28,12 +27,10 @@ app = FastAPI(
 )
 
 # --- Configuração do CORS ---
-# Define quais front-ends podem fazer requisições para esta API.
 origins = [
     "https://nextjs-extrator-binance-frontend.vercel.app",
     "http://localhost:3000",
 ]
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -44,12 +41,20 @@ app.add_middleware(
 
 # --- LÓGICA DE EXTRAÇÃO DE DADOS (Função Auxiliar) ---
 def fetch_binance_data(asset: str, interval: str, start_date: str, end_date: str) -> pd.DataFrame:
-    """Busca dados históricos para um único ativo e intervalo."""
+    """Busca dados históricos para um único ativo e intervalo, garantindo dias completos."""
     client = Client()
-    print(f"Buscando: {asset}, Intervalo: {interval}, de {start_date} a {end_date}")
+
+    ### MUDANÇA 1: Garantir que o dia final seja totalmente incluído ###
+    # Converte a string da data final para um objeto datetime
+    end_date_obj = datetime.strptime(end_date, '%Y-%m-%d')
+    # Adiciona um dia para garantir que todos os dados do último dia selecionado sejam incluídos
+    end_date_inclusive = (end_date_obj + timedelta(days=1)).strftime('%Y-%m-%d')
+    
+    print(f"Buscando: {asset}, Intervalo: {interval}, de {start_date} até o fim de {end_date}")
 
     try:
-        klines = client.get_historical_klines(asset, interval, start_date, end_date)
+        # Usa a data final ajustada na chamada da API
+        klines = client.get_historical_klines(asset, interval, start_date, end_date_inclusive)
         if not klines: return pd.DataFrame()
 
         columns = ['Open_Time', 'Open', 'High', 'Low', 'Close', 'Volume', 'Close_Time', 'Quote_Asset_Volume', 'Number_of_Trades', 'Taker_Buy_Base_Asset_Volume', 'Taker_Buy_Quote_Asset_Volume', 'Ignore']
@@ -59,6 +64,10 @@ def fetch_binance_data(asset: str, interval: str, start_date: str, end_date: str
         numeric_cols = ['Open', 'High', 'Low', 'Close', 'Volume']
         df[numeric_cols] = df[numeric_cols].apply(pd.to_numeric, axis=1)
         df['Resultado'] = df.apply(lambda row: 'Call' if row['Close'] >= row['Open'] else 'Put', axis=1)
+        
+        # Filtra para garantir que não pegamos dados do dia seguinte
+        df = df[df['Open_Time'] < end_date_inclusive]
+        
         return df[['Open_Time', 'Open', 'High', 'Low', 'Close', 'Volume', 'Resultado']]
     except Exception as e:
         print(f"Erro ao buscar dados para {asset} ({interval}): {e}")
@@ -71,13 +80,14 @@ def analisar_tecnica_gatilho(df: pd.DataFrame):
     minutos_gatilho = {4, 9, 14, 19, 24, 29, 34, 39, 44, 49, 54, 59}
     resultados = []
     i = 0
-    ultimo_resultado_foi_loss = True
 
     while i < len(df):
         vela_atual = df.iloc[i]
         minuto_atual = vela_atual['Open_Time'].minute
 
-        if minuto_atual in minutos_gatilho and ultimo_resultado_foi_loss:
+        ### MUDANÇA 2: Remove a condição 'and ultimo_resultado_foi_loss' ###
+        # Agora, a análise acontece em TODAS as velas de gatilho.
+        if minuto_atual in minutos_gatilho:
             if i + 4 >= len(df):
                 i += 1
                 continue
@@ -98,23 +108,22 @@ def analisar_tecnica_gatilho(df: pd.DataFrame):
                 'Sequencia_Esperada': ' → '.join(sequencia_operacoes),
                 'Resultado_Final': resultado_final_sequencia
             })
-
-            ultimo_resultado_foi_loss = (resultado_final_sequencia == "LOSS")
-            i += 5
+            
+            # Pula para a próxima vela após a vela de gatilho para evitar reanálise
+            i += 1
             continue
         i += 1
     return pd.DataFrame(resultados)
 
-# --- ENDPOINTS DA API ---
+# --- ENDPOINTS DA API (sem alterações aqui) ---
 
 @app.get("/", summary="Verifica o status da API")
 def read_root():
-    """Endpoint raiz que retorna um status de 'online'."""
     return {"status": "API online. Use os endpoints /download-data/ ou /analise-tecnica-gatilho/."}
 
 @app.post("/download-data/", summary="Extrator de Dados Genérico")
 async def endpoint_download_data(data: RequestData):
-    """Recebe configurações, busca dados e retorna um ZIP com arquivos CSV."""
+    # ... (código deste endpoint permanece o mesmo)
     zip_buffer = io.BytesIO()
     found_data = False
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
@@ -127,29 +136,22 @@ async def endpoint_download_data(data: RequestData):
                     df.to_csv(csv_buffer, index=False)
                     filename = f"{asset.upper()}_{interval}_{data.start_date}_a_{data.end_date}.csv"
                     zip_file.writestr(filename, csv_buffer.getvalue())
-    
     if not found_data:
         raise HTTPException(status_code=404, detail="Nenhum dado encontrado para os parâmetros fornecidos.")
-
     zip_buffer.seek(0)
     download_filename = f"binance_data_{datetime.now().strftime('%Y-%m-%d')}.zip"
     return StreamingResponse(zip_buffer, media_type="application/x-zip-compressed", headers={"Content-Disposition": f"attachment; filename={download_filename}"})
 
 @app.post("/analise-tecnica-gatilho/", summary="Analisador de Técnica de Gatilho")
 async def endpoint_analise_gatilho(data: RequestData):
-    """Busca dados de M1, aplica a análise da técnica de gatilho e retorna um ZIP com CSV e HTML."""
+    # ... (código deste endpoint permanece o mesmo)
     asset = data.assets[0]
     df_historico = fetch_binance_data(asset, '1m', data.start_date, data.end_date)
-
     if df_historico.empty:
         raise HTTPException(status_code=404, detail=f"Nenhum dado de 1 minuto encontrado para {asset} no período.")
-
     df_analise = analisar_tecnica_gatilho(df_historico)
-
     if df_analise.empty:
         raise HTTPException(status_code=404, detail="Nenhum gatilho válido encontrado para a análise no período fornecido.")
-
-    # Geração do HTML
     stats = df_analise['Resultado_Final'].value_counts(normalize=True).mul(100).round(2).to_dict()
     env = Environment(loader=FileSystemLoader('.'))
     template = env.get_template('template_gatilho.html')
@@ -161,15 +163,12 @@ async def endpoint_analise_gatilho(data: RequestData):
         stats=stats,
         table=df_analise.to_html(classes='styled-table', index=False, escape=False)
     )
-
-    # Geração do ZIP
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
         csv_buffer = io.StringIO()
         df_analise.to_csv(csv_buffer, index=False)
         zip_file.writestr(f"analise_{asset}_M1.csv", csv_buffer.getvalue())
         zip_file.writestr(f"relatorio_{asset}_M1.html", html_output)
-
     zip_buffer.seek(0)
     download_filename = f"analise_gatilho_{asset}_{datetime.now().strftime('%Y-%m-%d')}.zip"
     return StreamingResponse(zip_buffer, media_type="application/x-zip-compressed", headers={"Content-Disposition": f"attachment; filename={download_filename}"})
