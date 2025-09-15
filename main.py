@@ -8,10 +8,10 @@ from typing import List
 
 import pandas as pd
 from binance.client import Client
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from fastapi import FastAPI, HTTPException # type: ignore
+from fastapi.middleware.cors import CORSMiddleware # type: ignore
+from fastapi.responses import StreamingResponse # type: ignore
+from pydantic import BaseModel, Field # type: ignore
 
 # Não precisamos mais do dotenv, pois a única autenticação era para a tvdatafeed
 # from dotenv import load_dotenv
@@ -19,7 +19,7 @@ from pydantic import BaseModel, Field
 
 # --- VERIFICAÇÃO E IMPORTAÇÃO DE DEPENDÊNCIAS OPCIONAIS ---
 try:
-    from tradingview_ta import TA_Handler, Interval
+    from tradingview_ta import TA_Handler, Interval # type: ignore
     _TV_AVAILABLE = True
 except ImportError:
     _TV_AVAILABLE = False
