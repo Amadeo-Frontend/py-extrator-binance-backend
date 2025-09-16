@@ -1,35 +1,36 @@
-# backend/main.py (VERSÃO COM ALPHA VANTAGE)
+# backend/main.py
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-# 1. Importe o novo roteador junto com os outros
-from routers import binance, tradingview, alphavantage
+from routers import binance, tradingview, alphavantage, polygon
 
 app = FastAPI(
     title="API de Análise e Extração de Dados",
-    description="Uma API modular com funções para Binance, TradingView e Alpha Vantage."
+    description="Uma API modular com funções para Binance, TradingView, Alpha Vantage e Polygon.io."
 )
 
-# Configuração do CORS (continua igual)
+# Defina as origens permitidas (seu frontend local e em produção)
 origins = [
     "https://nextjs-extrator-binance-frontend.vercel.app",
     "http://localhost:3000",
 ]
+
+# --- CORREÇÃO APLICADA AQUI ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["POST", "GET"],
+    # Permita todos os métodos (GET, POST, OPTIONS, etc. )
+    allow_methods=["*"], 
     allow_headers=["*"],
- )
+)
 
 @app.get("/", tags=["Root"])
 def read_root():
     return {"status": "API modular online."}
 
-# --- JUNTA TUDO AQUI ---
+# Inclui todos os seus roteadores
 app.include_router(binance.router)
 app.include_router(tradingview.router)
-# 2. Inclua o roteador da Alpha Vantage
 app.include_router(alphavantage.router)
+app.include_router(polygon.router)
