@@ -1,14 +1,14 @@
-# backend/main.py (VERSÃO MODULARIZADA)
+# backend/main.py (VERSÃO COM ALPHA VANTAGE)
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# Importa os roteadores que criamos
-from routers import binance, tradingview
+# 1. Importe o novo roteador junto com os outros
+from routers import binance, tradingview, alphavantage
 
 app = FastAPI(
     title="API de Análise e Extração de Dados",
-    description="Uma API modular com funções para Binance e TradingView."
+    description="Uma API modular com funções para Binance, TradingView e Alpha Vantage."
 )
 
 # Configuração do CORS (continua igual)
@@ -29,8 +29,7 @@ def read_root():
     return {"status": "API modular online."}
 
 # --- JUNTA TUDO AQUI ---
-# Inclui todos os endpoints do arquivo binance.py na aplicação principal
 app.include_router(binance.router)
-
-# Inclui todos os endpoints do arquivo tradingview.py
 app.include_router(tradingview.router)
+# 2. Inclua o roteador da Alpha Vantage
+app.include_router(alphavantage.router)
