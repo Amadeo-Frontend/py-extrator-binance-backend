@@ -1,9 +1,28 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env")
+    # BINANCE
+    BINANCE_API_KEY: str | None = None
+    BINANCE_API_SECRET: str | None = None
 
-    NEON_DATABASE_URL: str
-    SECRET_KEY: str = "changeme"
+    # POLYGON
+    POLYGON_API_KEY: str | None = None
+
+    # ALPHA VANTAGE
+    ALPHAVANTAGE_API_KEY: str | None = None
+
+    # TRADINGVIEW
+    TV_USERNAME: str | None = None
+    TV_PASSWORD: str | None = None
+
+    # DATABASE
+    NEON_DB_URL: str | None = None
+
+    # OTHER
+    SECRET_KEY: str | None = None
+
+    class Config:
+        env_file = ".env"
+
 
 settings = Settings()
