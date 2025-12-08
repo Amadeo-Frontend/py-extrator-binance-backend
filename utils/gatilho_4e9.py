@@ -1,0 +1,55 @@
+import pandas as pd
+
+
+def analisar_tecnica_gatilho_universal(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Técnica de análise 4e9 aplicada tanto na Binance quanto na Polygon.
+    Mantém a lógica EXATA do seu código original.
+    """
+    if df.empty:
+        return pd.DataFrame()
+        
+    df = df.sort_values(by='Open_Time').reset_index(drop=True)
+    minutos_gatilho = {4, 9, 14, 19, 24, 29, 34, 39, 44, 49, 54, 59}
+    resultados = []
+    i = 0
+
+    while i < len(df):
+        vela_atual = df.iloc[i]
+        minuto_atual = pd.to_datetime(vela_atual['Open_Time']).minute
+
+        if minuto_atual in minutos_gatilho:
+            if i + 4 >= len(df):
+                i += 1
+                continue
+
+            vela_gatilho = vela_atual
+            cor_gatilho = vela_gatilho['Resultado']
+
+            sequencia_operacoes = (
+                ['Put', 'Put', 'Call', 'Call']
+                if cor_gatilho == 'Call'
+                else ['Call', 'Call', 'Put', 'Put']
+            )
+            
+            resultado_final_sequencia = "LOSS"
+
+            if df.iloc[i+1]['Resultado'] == sequencia_operacoes[0]:
+                resultado_final_sequencia = "WIN"
+            elif df.iloc[i+2]['Resultado'] == sequencia_operacoes[1]:
+                resultado_final_sequencia = "WIN GALE 1"
+            elif df.iloc[i+3]['Resultado'] == sequencia_operacoes[2]:
+                resultado_final_sequencia = "WIN GALE 2"
+            elif df.iloc[i+4]['Resultado'] == sequencia_operacoes[3]:
+                resultado_final_sequencia = "WIN GALE 3"
+
+            resultados.append({
+                'Horario_Gatilho': vela_gatilho['Open_Time'],
+                'Cor_Gatilho': cor_gatilho,
+                'Sequencia_Esperada': ' → '.join(sequencia_operacoes),
+                'Resultado_Final': resultado_final_sequencia
+            })
+
+        i += 1
+
+    return pd.DataFrame(resultados)

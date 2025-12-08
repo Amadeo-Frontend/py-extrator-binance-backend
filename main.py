@@ -1,44 +1,70 @@
-# backend/main.py (VERSÃO FINAL COM TAREFAS EM SEGUNDO PLANO)
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# Importa todos os roteadores, incluindo o novo para relatórios
-from routers import binance, tradingview, alphavantage, polygon, reports
+from core.config import settings
+from core.exceptions import add_exception_handlers
+
+from routers import (
+    auth_router,
+    binance_router,
+    polygon_router,
+    alphavantage_router,
+    tradingview_router,
+    reports_router,
+    tracking_router,
+    analytics_router,
+)
+
 
 app = FastAPI(
     title="API de Análise e Extração de Dados",
-    description="Uma API modular com funções para Binance, TradingView, Alpha Vantage e Polygon.io, com suporte a tarefas em segundo plano."
+    description=(
+        "API modular para análises e extrações de dados (Binance, Polygon, "
+        "Alpha Vantage, TradingView), geração de relatórios e analytics."
+    ),
+    version="1.0.0",
 )
 
-# Defina as origens permitidas (seu frontend local e em produção)
-origins = [
-    "https://nextjs-extrator-binance-frontend.vercel.app",
-    "http://localhost:3000",
-]
 
-# Configuração do CORS para permitir todos os métodos, essencial para as requisições 'OPTIONS'
+# -------------------------------------------------------------------
+# CORS
+# -------------------------------------------------------------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"], 
+    allow_methods=["*"],
     allow_headers=["*"],
- )
+)
 
+
+# -------------------------------------------------------------------
+# EXCEPTION HANDLERS GLOBAIS
+# -------------------------------------------------------------------
+add_exception_handlers(app)
+
+
+# -------------------------------------------------------------------
+# ROOT + HEALTHCHECK
+# -------------------------------------------------------------------
 @app.get("/", tags=["Root"])
-def read_root():
-    """Endpoint principal para verificar se a API está online."""
-    return {"status": "API modular online."}
+def root():
+    return {"status": "API online", "version": "1.0.0"}
 
-# --- REGISTRO DE TODOS OS ROTEADORES ---
-# O aplicativo principal delega as rotas para os módulos específicos.
 
-app.include_router(binance.router)
-app.include_router(tradingview.router)
-app.include_router(alphavantage.router)
-app.include_router(polygon.router)
+@app.get("/health", tags=["Health"])
+def health():
+    return {"status": "ok"}
 
-# Inclui o novo roteador para listar e baixar relatórios gerados
-app.include_router(reports.router)
 
+# -------------------------------------------------------------------
+# REGISTRO DE ROTEADORES (todos em /api/v1/...)
+# -------------------------------------------------------------------
+app.include_router(auth_router.router)
+app.include_router(binance_router.router)
+app.include_router(polygon_router.router)
+app.include_router(alphavantage_router.router)
+app.include_router(tradingview_router.router)
+app.include_router(reports_router.router)
+app.include_router(tracking_router.router)
+app.include_router(analytics_router.router)

@@ -1,0 +1,26 @@
+[project]
+name = "extrator-backend"
+version = "1.0.0"
+description = "Backend modular para extração e análise (Binance, Polygon, TradingView, AlphaVantage)"
+requires-python = ">=3.11"
+
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "python-dotenv",
+    "pandas",
+    "numpy",
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+    "psycopg2-binary",
+    "asyncpg",
+    "python-binance",
+    "python-multipart",
+    "polygon-api-client",
+    "alpha_vantage",
+    "tradingview-ta"
+]
+
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"

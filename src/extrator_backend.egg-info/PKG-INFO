@@ -1,0 +1,19 @@
+Metadata-Version: 2.4
+Name: extrator-backend
+Version: 1.0.0
+Summary: Backend modular para extração e análise (Binance, Polygon, TradingView, AlphaVantage)
+Requires-Python: >=3.11
+Requires-Dist: fastapi
+Requires-Dist: uvicorn[standard]
+Requires-Dist: python-dotenv
+Requires-Dist: pandas
+Requires-Dist: numpy
+Requires-Dist: pydantic>=2.0
+Requires-Dist: pydantic-settings>=2.0
+Requires-Dist: psycopg2-binary
+Requires-Dist: asyncpg
+Requires-Dist: python-binance
+Requires-Dist: python-multipart
+Requires-Dist: polygon-api-client
+Requires-Dist: alpha_vantage
+Requires-Dist: tradingview-ta
