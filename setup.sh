@@ -1,26 +1,19 @@
 #!/usr/bin/env bash
 set -e
 
-echo "🚀 Iniciando setup do backend..."
-
-# 1️⃣ Garantir Python 3.10 no Render
-echo "🔧 Instalando Python 3.10..."
-PYTHON_VERSION=3.10
-
-# Render já fornece vários Python, este comando ajusta o path
-export PATH="/opt/python/$PYTHON_VERSION/bin:$PATH"
-
-python3 --version
-
-# 2️⃣ Instalar UV (gerenciador de pacotes)
-echo "📦 Instalando uv..."
+echo ">>> Instalando UV..."
 pip install uv
 
-# 3️⃣ Instalar dependências do projeto
-echo "📚 Instalando dependências com uv..."
-uv sync --no-dev
+echo ">>> Garantindo que o Python correto está selecionado..."
+uv python install 3.10
 
-# 4️⃣ Criar diretório para logs (evita erros em produção)
-mkdir -p logs
+echo ">>> Fixando Python 3.10 como versão do projeto..."
+uv python pin 3.10
 
-echo "✅ Setup concluído com sucesso!"
+echo ">>> Sincronizando dependências..."
+uv sync --frozen || {
+    echo ">>> uv sync falhou. Tentando novamente sem --frozen..."
+    uv sync
+}
+
+echo ">>> Build finalizado com sucesso!"

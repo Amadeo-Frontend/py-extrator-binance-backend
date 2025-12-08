@@ -1,9 +1,0 @@
-README.md
-pyproject.toml
-src/backend/__init__.py
-src/backend/py.typed
-src/extrator_backend.egg-info/PKG-INFO
-src/extrator_backend.egg-info/SOURCES.txt
-src/extrator_backend.egg-info/dependency_links.txt
-src/extrator_backend.egg-info/requires.txt
-src/extrator_backend.egg-info/top_level.txt
