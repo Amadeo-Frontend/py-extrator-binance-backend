@@ -9,6 +9,7 @@ requires-python = ">=3.10,<3.11"
 
 dependencies = [
     "fastapi>=0.116.1",
+    "bcrypt>=4.2.0",
     "uvicorn>=0.35.0",
     "python-multipart>=0.0.20",
     "python-dotenv>=1.1.1",
