@@ -1,26 +1,39 @@
 [project]
-name = "extrator-backend"
+name = "extrator-binance-backend"
 version = "1.0.0"
-description = "Backend modular para extração e análise (Binance, Polygon, TradingView, AlphaVantage)"
-requires-python = ">=3.11"
+description = "API FastAPI com Binance, Polygon, Alpha Vantage, TradingView e sistema de analytics."
+authors = [
+    { name = "Amadeo Bon" }
+]
+requires-python = ">=3.10,<3.11"
 
 dependencies = [
-    "fastapi",
-    "uvicorn[standard]",
-    "python-dotenv",
-    "pandas",
-    "numpy",
-    "pydantic>=2.0",
-    "pydantic-settings>=2.0",
-    "psycopg2-binary",
-    "asyncpg",
-    "python-binance",
-    "python-multipart",
-    "polygon-api-client",
-    "alpha_vantage",
-    "tradingview-ta"
+    "fastapi>=0.116.1",
+    "uvicorn>=0.35.0",
+    "python-multipart>=0.0.20",
+    "python-dotenv>=1.1.1",
+    "pydantic>=2.11.9",
+    "pydantic-settings>=2.6.0",
+    "pandas>=2.3.2",
+    "numpy==1.26.4",
+    "requests>=2.32.5",
+    "python-binance>=1.0.29",
+    "polygon-api-client>=1.15.3",
+    "alpha-vantage>=3.0.0",
+    "tradingview-ta>=3.3.0",
+    "asyncpg>=0.29.0",
+    "pycryptodome>=3.23.0",
+    "dateparser>=1.2.2",
+    "tzlocal>=5.3.1",
+    "pyyaml>=6.0.2",
+    "websocket-client>=1.8.0",
+    "websockets>=14.2",
+    "watchfiles>=1.1.0",
 ]
 
+[tool.uv]
+managed = true
+
 [build-system]
-requires = ["setuptools>=61", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
