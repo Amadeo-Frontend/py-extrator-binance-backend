@@ -1,25 +1,14 @@
-from pydantic import BaseSettings
-from typing import List
-
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
-    # Origens que podem acessar sua API (CORS)
-    ALLOWED_ORIGINS: List[str] = [
-        "http://localhost:3000",
-        "https://nextjs-extrator-binance-frontend.vercel.app",
-    ]
+    api_key_binance: str | None = None
+    api_secret_binance: str | None = None
 
-    # URL do banco Neon (você já usa isso nos routers)
-    NEON_DATABASE_URL: str | None = None
+    api_key_polygon: str | None = None
+    api_key_alphavantage: str | None = None
 
-    # Chaves de APIs externas (opcionalmente centralizadas aqui)
-    POLYGON_API_KEY: str | None = None
-    ALPHA_VANTAGE_API_KEY: str | None = None
+    jwt_secret: str | None = None
 
-    class Config:
-        env_file = ".env"
-        extra = "ignore"  # ignora variáveis extra
-
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 settings = Settings()
-
