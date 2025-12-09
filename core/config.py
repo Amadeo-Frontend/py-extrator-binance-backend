@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     TV_PASSWORD: str | None = None
 
     # === CORS ===
-    ALLOWED_ORIGINS: str | None = "https://nextjs-extrator-binance-frontend.vercel.app,http://localhost:3000"
+    ALLOWED_ORIGINS: str | None = ["*"]
 
     # === OUTROS ===
     SECRET_KEY: str | None = None
