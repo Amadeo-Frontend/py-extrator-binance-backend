@@ -1,6 +1,5 @@
 from pydantic_settings import BaseSettings
 
-
 class Settings(BaseSettings):
     # === BINANCE ===
     BINANCE_API_KEY: str | None = None
@@ -16,14 +15,14 @@ class Settings(BaseSettings):
     TV_USERNAME: str | None = None
     TV_PASSWORD: str | None = None
 
-    # === OTHER ===
-    SECRET_KEY: str | None = None
-
     # === CORS ===
-    ALLOWED_ORIGINS: list[str] = ["*"]
+    ALLOWED_ORIGINS: str | None = "https://nextjs-extrator-binance-frontend.vercel.app,http://localhost:3000"
+
+    # === OUTROS ===
+    SECRET_KEY: str | None = None
+    NEON_DATABASE_URL: str | None = None
 
     class Config:
         env_file = ".env"
-
 
 settings = Settings()
