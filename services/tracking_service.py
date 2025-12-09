@@ -1,4 +1,5 @@
-import psycopg2
+# services/tracking_service.py
+
 from models.db import get_sync_conn
 
 
