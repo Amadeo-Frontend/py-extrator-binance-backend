@@ -1,67 +1,22 @@
 #!/usr/bin/env bash
 set -e
 
-echo "🚀 Iniciando setup de ambiente para Render..."
+echo "🚀 Iniciando setup do ambiente para Render..."
 
-# -------------------------------
-# 1️⃣ Garantir que Python está ok
-# -------------------------------
+# 1. Conferir versão do Python
+echo "➡️ Verificando Python..."
+python --version
 
-echo "🧪 Verificando versão do Python..."
-python3 --version
+# 2. Instalar UV caso não exista
+echo "➡️ Garantindo UV instalado..."
+pip install uv
 
-# Render já vem com Python 3.10.x
-# (compatível com psycopg2, numpy 1.26, etc)
+# 3. Gerar requirements.txt limpo
+echo "➡️ Gerando requirements.txt a partir do pyproject.toml..."
+uv pip compile pyproject.toml -o requirements.txt --upgrade
 
-# -------------------------------
-# 2️⃣ Instalar UV se necessário
-# -------------------------------
+# 4. Instalar dependências
+echo "➡️ Instalando dependências..."
+uv pip install -r requirements.txt
 
-if ! command -v uv &> /dev/null
-then
-    echo "📦 Instalando UV..."
-    pip install uv
-else
-    echo "✔ UV já instalado"
-fi
-
-
-# -------------------------------
-# 3️⃣ Instalar dependências
-# -------------------------------
-
-echo "📦 Instalando dependências do requirements.txt..."
-uv pip install -r requirements.txt --system --no-cache
-
-
-# -------------------------------
-# 4️⃣ Criar diretórios necessários
-# -------------------------------
-
-echo "📁 Garantindo que pastas existem..."
-mkdir -p logs
-mkdir -p tmp
-
-
-# -------------------------------
-# 5️⃣ Testes de integridade
-# -------------------------------
-
-echo "🔍 Testando importação de módulos essenciais..."
-
-python3 - << 'EOF'
-import psycopg2
-import asyncpg
-import fastapi
-import uvicorn
-import numpy
-import pandas
-print("✔ Todos módulos importados com sucesso.")
-EOF
-
-
-# -------------------------------
-# 6️⃣ Conclusão
-# -------------------------------
-
-echo "🎉 Setup concluído com sucesso!"
+echo "✅ Setup finalizado!"
