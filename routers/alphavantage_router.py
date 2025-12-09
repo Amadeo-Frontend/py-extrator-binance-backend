@@ -8,7 +8,7 @@ router = APIRouter(
 )
 
 
-@router.post("/download-data")
+@router.post("/extract")
 async def av_extract(data: RequestData, bg: BackgroundTasks):
     bg.add_task(run_extraction, data)
     return {"message": "Extração AlphaVantage iniciada."}

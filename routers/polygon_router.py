@@ -8,7 +8,7 @@ router = APIRouter(
 )
 
 
-@router.post("/download-data")
+@router.post("/extract")
 async def polygon_extract(data: RequestData, bg: BackgroundTasks):
     bg.add_task(run_extraction, data)
     return {"message": f"Extração Polygon iniciada para {len(data.assets)} ativos."}

@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 
+
 class Settings(BaseSettings):
     # BINANCE
     BINANCE_API_KEY: str | None = None
@@ -9,14 +10,11 @@ class Settings(BaseSettings):
     POLYGON_API_KEY: str | None = None
 
     # ALPHA VANTAGE
-    ALPHAVANTAGE_API_KEY: str | None = None
+    ALPHA_VANTAGE_API_KEY: str | None = None
 
     # TRADINGVIEW
     TV_USERNAME: str | None = None
     TV_PASSWORD: str | None = None
-
-    # DATABASE
-    NEON_DB_URL: str | None = None
 
     # OTHER
     SECRET_KEY: str | None = None
