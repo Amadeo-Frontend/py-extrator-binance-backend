@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from healthcheck import healthcheck
 
 from core.config import settings
 from core.exceptions import add_exception_handlers
@@ -52,9 +53,9 @@ def root():
     return {"status": "API online", "version": "1.0.0"}
 
 
-@app.get("/health", tags=["Health"])
-def health():
-    return {"status": "ok"}
+@app.get("/health")
+def health_route():
+    return healthcheck()
 
 
 # -------------------------------------------------------------------
