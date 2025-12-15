@@ -6,7 +6,6 @@ from core.exceptions import add_exception_handlers
 
 from models.db import SessionLocal
 from utils.admin_seed import seed_admin
-from healthcheck import healthcheck
 
 from routers import (
     auth_router,
@@ -21,17 +20,10 @@ from routers import (
 
 app = FastAPI(
     title="API de Análise e Extração de Dados",
-    description=(
-        "API modular para análises e extrações de dados "
-        "(Binance, Polygon, Alpha Vantage, TradingView), "
-        "geração de relatórios e analytics."
-    ),
     version="1.0.0",
 )
 
-# --------------------------------------------------
-# CORS
-# --------------------------------------------------
+# ---------------- CORS ----------------
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
@@ -40,36 +32,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --------------------------------------------------
-# EXCEPTION HANDLERS
-# --------------------------------------------------
+# ----------- EXCEPTIONS --------------
 add_exception_handlers(app)
 
-# --------------------------------------------------
-# STARTUP → seed do admin
-# --------------------------------------------------
+# ----------- STARTUP -----------------
 @app.on_event("startup")
-def startup_event():
+def startup():
     db = SessionLocal()
     try:
         seed_admin(db)
     finally:
         db.close()
 
-# --------------------------------------------------
-# ROOT + HEALTH
-# --------------------------------------------------
-@app.get("/", tags=["Root"])
+# ----------- ROOT --------------------
+@app.get("/")
 def root():
-    return {"status": "API online", "version": "1.0.0"}
+    return {"status": "API online"}
 
-@app.get("/health", tags=["Health"])
+@app.get("/health")
 def health():
-    return healthcheck()
+    return {"status": "ok"}
 
-# --------------------------------------------------
-# ROUTERS
-# --------------------------------------------------
+# ----------- ROUTERS -----------------
 app.include_router(auth_router.router)
 app.include_router(binance_router.router)
 app.include_router(polygon_router.router)

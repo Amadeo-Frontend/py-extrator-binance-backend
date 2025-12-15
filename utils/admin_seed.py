@@ -1,18 +1,34 @@
 from sqlalchemy.orm import Session
-from models.user import User
-from core.security import get_password_hash
+from sqlalchemy import text
 from core.config import settings
-
+from core.security import get_password_hash
 
 def seed_admin(db: Session):
-    admin = db.query(User).filter(User.email == settings.ADMIN_EMAIL).first()
-    if admin:
+    email = settings.ADMIN_EMAIL
+    password = settings.ADMIN_PASSWORD
+
+    if not email or not password:
         return
 
-    admin = User(
-        email=settings.ADMIN_EMAIL,
-        hashed_password=get_password_hash(settings.ADMIN_PASSWORD),
-        role="admin",
+    exists = db.execute(
+        text("SELECT 1 FROM users WHERE email = :email"),
+        {"email": email},
+    ).fetchone()
+
+    if exists:
+        return
+
+    hashed = get_password_hash(password)
+
+    db.execute(
+        text("""
+            INSERT INTO users (email, hashed_password, role, is_active)
+            VALUES (:email, :password, 'admin', true)
+        """),
+        {
+            "email": email,
+            "password": hashed,
+        },
     )
-    db.add(admin)
+
     db.commit()
