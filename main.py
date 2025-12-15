@@ -1,11 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from healthcheck import healthcheck
-from utils.admin_seed import seed_admin
+
 from database import SessionLocal
+from healthcheck import healthcheck
 
 from core.config import settings
 from core.exceptions import add_exception_handlers
+
+from utils.admin_seed import seed_admin
 
 from routers import (
     auth_router,
@@ -18,20 +20,22 @@ from routers import (
     analytics_router,
 )
 
-
+# --------------------------------------------------
+# APP
+# --------------------------------------------------
 app = FastAPI(
     title="API de Análise e Extração de Dados",
     description=(
-        "API modular para análises e extrações de dados (Binance, Polygon, "
-        "Alpha Vantage, TradingView), geração de relatórios e analytics."
+        "API modular para análises e extrações de dados "
+        "(Binance, Polygon, Alpha Vantage, TradingView), "
+        "geração de relatórios e analytics."
     ),
     version="1.0.0",
 )
 
-
-# -------------------------------------------------------------------
+# --------------------------------------------------
 # CORS
-# -------------------------------------------------------------------
+# --------------------------------------------------
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
@@ -40,33 +44,45 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-# -------------------------------------------------------------------
+# --------------------------------------------------
 # EXCEPTION HANDLERS GLOBAIS
-# -------------------------------------------------------------------
+# --------------------------------------------------
 add_exception_handlers(app)
 
+# --------------------------------------------------
+# STARTUP (SEED ADMIN)
+# --------------------------------------------------
 @app.on_event("startup")
-def startup():
+def on_startup():
+    """
+    Cria o usuário admin automaticamente
+    caso não exista.
+    """
     db = SessionLocal()
-    seed_admin(db)
-    db.close()
-# -------------------------------------------------------------------
+    try:
+        seed_admin(db)
+    finally:
+        db.close()
+
+# --------------------------------------------------
 # ROOT + HEALTHCHECK
-# -------------------------------------------------------------------
+# --------------------------------------------------
 @app.get("/", tags=["Root"])
 def root():
-    return {"status": "API online", "version": "1.0.0"}
+    return {
+        "status": "API online",
+        "service": "extrator-binance-backend",
+        "version": "1.0.0",
+    }
 
 
-@app.get("/health")
+@app.get("/health", tags=["Health"])
 def health_route():
     return healthcheck()
 
-
-# -------------------------------------------------------------------
-# REGISTRO DE ROTEADORES (todos em /api/v1/...)
-# -------------------------------------------------------------------
+# --------------------------------------------------
+# ROTAS
+# --------------------------------------------------
 app.include_router(auth_router.router)
 app.include_router(binance_router.router)
 app.include_router(polygon_router.router)
