@@ -1,7 +1,5 @@
-# core/config.py
 from pydantic_settings import BaseSettings
 from typing import List
-import json
 
 class Settings(BaseSettings):
     # === BINANCE ===
@@ -21,11 +19,9 @@ class Settings(BaseSettings):
     # === CORS ===
     ALLOWED_ORIGINS: List[str] = ["*"]
 
-    # === SEGURANÇA ===
-    SECRET_KEY: str | None = None
-
-    # === DATABASE ===
-    NEON_DATABASE_URL: str | None = None
+    # === AUTH / SECURITY ===
+    SECRET_KEY: str
+    NEON_DATABASE_URL: str
 
     # === ADMIN SEED ===
     ADMIN_EMAIL: str | None = None
@@ -33,24 +29,3 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
-
-        @classmethod
-        def parse_env_var(cls, field_name: str, raw_value: str):
-            """
-            Permite usar:
-            ALLOWED_ORIGINS=*
-            ou
-            ALLOWED_ORIGINS=["https://site.com"]
-            """
-            if field_name == "ALLOWED_ORIGINS":
-                if raw_value == "*":
-                    return ["*"]
-                try:
-                    return json.loads(raw_value)
-                except Exception:
-                    return [raw_value]
-
-            return raw_value
-
-
-settings = Settings()
