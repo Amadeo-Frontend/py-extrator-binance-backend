@@ -1,31 +1,19 @@
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from datetime import datetime, timedelta
+from jose import jwt
+from passlib.context import CryptContext
+from core.config import settings
 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-security_scheme = HTTPBearer(auto_error=False)
+def hash_password(password: str):
+    return pwd_context.hash(password)
 
+def verify_password(password: str, hashed: str):
+    return pwd_context.verify(password, hashed)
 
-async def get_current_user_token(
-    credentials: HTTPAuthorizationCredentials | None = Depends(security_scheme),
-) -> str | None:
-    """
-    Placeholder para futura autenticação via Bearer Token (JWT ou similar).
-    Hoje não é obrigatório e não interfere nas rotas existentes.
-    """
-    if credentials is None:
-        # Retorna None ao invés de levantar erro, para não quebrar nada existente
-        return None
-
-    token = credentials.credentials
-    # Aqui futuramente você pode validar o token (JWT, etc.)
-    return token
-
-
-def require_admin_token(token: str | None = Depends(get_current_user_token)) -> None:
-    """
-    Exemplo de guard de admin.
-    Hoje não valida nada, mas já deixa o gancho para o futuro.
-    """
-    # Exemplo futuro:
-    # if not token or not is_admin(token): raise HTTPException(...)
-    return
+def create_access_token(data: dict):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(hours=8)
+    to_encode.update({"exp": expire})
+    encoded = jwt.encode(to_encode, settings.SECRET_KEY, algorithm="HS256")
+    return encoded

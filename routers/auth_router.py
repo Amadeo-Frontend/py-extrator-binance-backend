@@ -1,27 +1,39 @@
+import os
 from fastapi import APIRouter, HTTPException
-from models.auth_schemas import AuthPayload, AuthResponse
-from services.analytics_service import validate_user
-import bcrypt
+from pydantic import BaseModel
+from datetime import timedelta
+from core.security import create_access_token
 
-router = APIRouter(
-    prefix="/api/v1/auth",
-    tags=["Auth"]
-)
+router = APIRouter(prefix="/auth", tags=["auth"])
+
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
 
 
-@router.post("/login", response_model=AuthResponse)
-async def login(data: AuthPayload):
-    """
-    Login oficial integrado ao banco (tabela users)
-    via analytics_service.validate_user.
-    """
-    user = await validate_user(
-        email=data.email,
-        password_hash=data.password,
-        checkpw_fn=bcrypt.checkpw
-    )
+class LoginSchema(BaseModel):
+    email: str
+    password: str
 
-    if not user:
+
+@router.post("/login")
+def login(data: LoginSchema):
+    if not ADMIN_EMAIL or not ADMIN_PASSWORD:
+        raise HTTPException(status_code=500, detail="Admin credentials not configured")
+
+    if data.email != ADMIN_EMAIL or data.password != ADMIN_PASSWORD:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    return user
+    token = create_access_token(
+        data={"sub": data.email},
+        expires_delta=timedelta(days=1),
+    )
+
+    return {
+        "access_token": token,
+        "user": {
+            "id": 1,
+            "email": ADMIN_EMAIL,
+            "name": "Admin",
+            "role": "admin",
+        },
+    }

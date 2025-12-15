@@ -1,18 +1,12 @@
-from pydantic import BaseModel
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import declarative_base
 
+Base = declarative_base()
 
-class AuthPayload(BaseModel):
-    """
-    Payload usado tanto para login quanto para validação Analytics.
-    """
-    email: str
-    password: str
+class User(Base):
+    __tablename__ = "users"
 
-
-class AuthResponse(BaseModel):
-    """
-    Retorno padronizado de autenticação.
-    """
-    id: str
-    email: str
-    role: str
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True, nullable=False)
+    password_hash = Column(String, nullable=False)
+    role = Column(String, default="user")
