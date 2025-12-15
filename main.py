@@ -27,9 +27,6 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# -------------------------------------------------------------------
-# CORS
-# -------------------------------------------------------------------
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
@@ -38,21 +35,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# -------------------------------------------------------------------
-# EXCEPTION HANDLERS
-# -------------------------------------------------------------------
 add_exception_handlers(app)
 
-# -------------------------------------------------------------------
-# STARTUP
-# -------------------------------------------------------------------
 @app.on_event("startup")
 def startup():
     seed_admin()
 
-# -------------------------------------------------------------------
-# ROOT + HEALTHCHECK
-# -------------------------------------------------------------------
 @app.get("/", tags=["Root"])
 def root():
     return {"status": "API online", "version": "1.0.0"}
@@ -61,9 +49,6 @@ def root():
 def health_route():
     return healthcheck()
 
-# -------------------------------------------------------------------
-# ROUTERS
-# -------------------------------------------------------------------
 app.include_router(auth_router.router)
 app.include_router(binance_router.router)
 app.include_router(polygon_router.router)
