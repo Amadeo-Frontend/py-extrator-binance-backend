@@ -19,11 +19,6 @@ from routers import (
 
 app = FastAPI(
     title="API de Análise e Extração de Dados",
-    description=(
-        "API modular para análises e extrações de dados "
-        "(Binance, Polygon, Alpha Vantage, TradingView), "
-        "geração de relatórios e analytics."
-    ),
     version="1.0.0",
 )
 
@@ -37,17 +32,21 @@ app.add_middleware(
 
 add_exception_handlers(app)
 
+
 @app.on_event("startup")
 def startup():
     seed_admin()
 
-@app.get("/", tags=["Root"])
+
+@app.get("/")
 def root():
-    return {"status": "API online", "version": "1.0.0"}
+    return {"status": "API online"}
+
 
 @app.get("/health")
-def health_route():
+def health():
     return healthcheck()
+
 
 app.include_router(auth_router.router)
 app.include_router(binance_router.router)
