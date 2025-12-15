@@ -1,34 +1,38 @@
-from sqlalchemy.orm import Session
-from sqlalchemy import text
+import bcrypt
 from core.config import settings
-from core.security import get_password_hash
 
-def seed_admin(db: Session):
+def seed_admin(conn):
     email = settings.ADMIN_EMAIL
     password = settings.ADMIN_PASSWORD
 
     if not email or not password:
+        print("[ADMIN SEED] ADMIN_EMAIL ou ADMIN_PASSWORD não definidos")
         return
 
-    exists = db.execute(
-        text("SELECT 1 FROM users WHERE email = :email"),
-        {"email": email},
-    ).fetchone()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT id FROM users WHERE email = %s",
+        (email,)
+    )
+    exists = cursor.fetchone()
 
     if exists:
+        print("[ADMIN SEED] Admin já existe")
         return
 
-    hashed = get_password_hash(password)
+    hashed = bcrypt.hashpw(
+        password.encode(),
+        bcrypt.gensalt()
+    ).decode()
 
-    db.execute(
-        text("""
-            INSERT INTO users (email, hashed_password, role, is_active)
-            VALUES (:email, :password, 'admin', true)
-        """),
-        {
-            "email": email,
-            "password": hashed,
-        },
+    cursor.execute(
+        """
+        INSERT INTO users (email, password_hash, role)
+        VALUES (%s, %s, 'admin')
+        """,
+        (email, hashed),
     )
 
-    db.commit()
+    conn.commit()
+    print("[ADMIN SEED] Admin criado com sucesso")

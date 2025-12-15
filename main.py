@@ -4,8 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
 from core.exceptions import add_exception_handlers
 
-from models.db import SessionLocal
+from healthcheck import healthcheck
 from utils.admin_seed import seed_admin
+from models.db import get_sync_conn
 
 from routers import (
     auth_router,
@@ -20,10 +21,16 @@ from routers import (
 
 app = FastAPI(
     title="API de Análise e Extração de Dados",
+    description=(
+        "API modular para análises e extrações de dados "
+        "(Binance, Polygon, Alpha Vantage, TradingView)"
+    ),
     version="1.0.0",
 )
 
-# ---------------- CORS ----------------
+# --------------------------------------------------
+# CORS
+# --------------------------------------------------
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
@@ -32,28 +39,36 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ----------- EXCEPTIONS --------------
+# --------------------------------------------------
+# EXCEPTIONS
+# --------------------------------------------------
 add_exception_handlers(app)
 
-# ----------- STARTUP -----------------
+# --------------------------------------------------
+# STARTUP (seed admin)
+# --------------------------------------------------
 @app.on_event("startup")
 def startup():
-    db = SessionLocal()
+    conn = get_sync_conn()
     try:
-        seed_admin(db)
+        seed_admin(conn)
     finally:
-        db.close()
+        conn.close()
 
-# ----------- ROOT --------------------
-@app.get("/")
+# --------------------------------------------------
+# ROOT + HEALTH
+# --------------------------------------------------
+@app.get("/", tags=["Root"])
 def root():
-    return {"status": "API online"}
+    return {"status": "API online", "version": "1.0.0"}
 
-@app.get("/health")
+@app.get("/health", tags=["Health"])
 def health():
-    return {"status": "ok"}
+    return healthcheck()
 
-# ----------- ROUTERS -----------------
+# --------------------------------------------------
+# ROUTERS
+# --------------------------------------------------
 app.include_router(auth_router.router)
 app.include_router(binance_router.router)
 app.include_router(polygon_router.router)
