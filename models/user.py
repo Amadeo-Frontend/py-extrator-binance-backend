@@ -1,11 +1,19 @@
-from sqlalchemy import Column, Integer, String
-from models.db import Base
+from sqlalchemy.orm import Session
+from models.db import User
+from core.security import get_password_hash
+from core.config import settings
 
+def seed_admin(db: Session):
+    admin = db.query(User).filter(User.email == settings.ADMIN_EMAIL).first()
+    if admin:
+        return
 
-class User(Base):
-    __tablename__ = "users"
+    user = User(
+        email=settings.ADMIN_EMAIL,
+        hashed_password=get_password_hash(settings.ADMIN_PASSWORD),
+        role="admin",
+        is_active=True,
+    )
 
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    role = Column(String, default="admin", nullable=False)
+    db.add(user)
+    db.commit()

@@ -1,13 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from database import SessionLocal
-from healthcheck import healthcheck
-
 from core.config import settings
 from core.exceptions import add_exception_handlers
 
+from models.db import SessionLocal
 from utils.admin_seed import seed_admin
+from healthcheck import healthcheck
 
 from routers import (
     auth_router,
@@ -20,9 +19,6 @@ from routers import (
     analytics_router,
 )
 
-# --------------------------------------------------
-# APP
-# --------------------------------------------------
 app = FastAPI(
     title="API de Análise e Extração de Dados",
     description=(
@@ -45,19 +41,15 @@ app.add_middleware(
 )
 
 # --------------------------------------------------
-# EXCEPTION HANDLERS GLOBAIS
+# EXCEPTION HANDLERS
 # --------------------------------------------------
 add_exception_handlers(app)
 
 # --------------------------------------------------
-# STARTUP (SEED ADMIN)
+# STARTUP → seed do admin
 # --------------------------------------------------
 @app.on_event("startup")
-def on_startup():
-    """
-    Cria o usuário admin automaticamente
-    caso não exista.
-    """
+def startup_event():
     db = SessionLocal()
     try:
         seed_admin(db)
@@ -65,23 +57,18 @@ def on_startup():
         db.close()
 
 # --------------------------------------------------
-# ROOT + HEALTHCHECK
+# ROOT + HEALTH
 # --------------------------------------------------
 @app.get("/", tags=["Root"])
 def root():
-    return {
-        "status": "API online",
-        "service": "extrator-binance-backend",
-        "version": "1.0.0",
-    }
-
+    return {"status": "API online", "version": "1.0.0"}
 
 @app.get("/health", tags=["Health"])
-def health_route():
+def health():
     return healthcheck()
 
 # --------------------------------------------------
-# ROTAS
+# ROUTERS
 # --------------------------------------------------
 app.include_router(auth_router.router)
 app.include_router(binance_router.router)
