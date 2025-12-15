@@ -3,10 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from core.config import settings
 from core.exceptions import add_exception_handlers
-
 from healthcheck import healthcheck
 from utils.admin_seed import seed_admin
-from models.db import get_sync_conn
 
 from routers import (
     auth_router,
@@ -50,11 +48,7 @@ add_exception_handlers(app)
 # -------------------------------------------------------------------
 @app.on_event("startup")
 def startup():
-    conn = get_sync_conn()
-    try:
-        seed_admin(conn)
-    finally:
-        conn.close()
+    seed_admin()
 
 # -------------------------------------------------------------------
 # ROOT + HEALTHCHECK

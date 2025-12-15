@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from typing import List
 
 class Settings(BaseSettings):
     # === BINANCE ===
@@ -15,8 +16,12 @@ class Settings(BaseSettings):
     TV_USERNAME: str | None = None
     TV_PASSWORD: str | None = None
 
+    # === ADMIN ===
+    ADMIN_EMAIL: str | None = None
+    ADMIN_PASSWORD: str | None = None
+
     # === CORS ===
-    ALLOWED_ORIGINS: str | None = ["*"]
+    ALLOWED_ORIGINS: List[str] = ["*"]
 
     # === OUTROS ===
     SECRET_KEY: str | None = None

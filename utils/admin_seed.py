@@ -1,5 +1,3 @@
-# utils/admin_seed.py
-
 import bcrypt
 from psycopg2.extras import RealDictCursor
 
@@ -26,24 +24,20 @@ def seed_admin():
         conn = get_sync_conn()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
 
-        # Verifica se admin já existe
         cursor.execute(
             "SELECT id FROM users WHERE email = %s",
             (admin_email,)
         )
 
-        existing = cursor.fetchone()
-        if existing:
+        if cursor.fetchone():
             print("[ADMIN SEED] Admin já existe, pulando seed")
             return
 
-        # Gera hash seguro
         password_hash = bcrypt.hashpw(
             admin_password.encode("utf-8"),
             bcrypt.gensalt(12)
         ).decode("utf-8")
 
-        # Cria admin
         cursor.execute(
             """
             INSERT INTO users (email, password_hash, role)
