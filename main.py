@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from healthcheck import healthcheck
+from utils.admin_seed import seed_admin
+from database import SessionLocal
 
 from core.config import settings
 from core.exceptions import add_exception_handlers
@@ -44,7 +46,11 @@ app.add_middleware(
 # -------------------------------------------------------------------
 add_exception_handlers(app)
 
-
+@app.on_event("startup")
+def startup():
+    db = SessionLocal()
+    seed_admin(db)
+    db.close()
 # -------------------------------------------------------------------
 # ROOT + HEALTHCHECK
 # -------------------------------------------------------------------
