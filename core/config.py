@@ -1,6 +1,7 @@
 from pydantic_settings import BaseSettings
 from typing import List
 
+
 class Settings(BaseSettings):
     # === BINANCE ===
     BINANCE_API_KEY: str | None = None
@@ -29,3 +30,7 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+
+
+# 🔥 ESTA LINHA É O QUE ESTAVA FALTANDO
+settings = Settings()
