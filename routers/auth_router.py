@@ -27,15 +27,15 @@ def login(payload: dict):
 
     if not user or not bcrypt.checkpw(
         password.encode("utf-8"),
-        user["password_hash"].encode("utf-8")
+        user[2].encode("utf-8")
     ):
         raise HTTPException(status_code=401, detail="Credenciais inválidas")
 
     token = create_access_token(
         {
-            "sub": str(user["id"]),
-            "email": user["email"],
-            "role": user["role"],
+            "sub": str(user[0]),
+            "email": user[1],
+            "role": user[3],
         },
         expires_delta=timedelta(hours=8),
     )
@@ -44,8 +44,9 @@ def login(payload: dict):
         "access_token": token,
         "token_type": "bearer",
         "user": {
-            "id": user["id"],
-            "email": user["email"],
-            "role": user["role"],
+            "id": user[0],
+            "email": user[1],
+            "role": user[3],
         },
     }
+
