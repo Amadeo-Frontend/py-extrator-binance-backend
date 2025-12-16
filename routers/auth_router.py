@@ -1,7 +1,6 @@
-from fastapi import APIRouter, HTTPException
-from psycopg2.extras import RealDictCursor
-import bcrypt
 from datetime import timedelta
+from fastapi import APIRouter, HTTPException
+import bcrypt
 
 from models.db import get_sync_conn
 from core.security import create_access_token
@@ -14,10 +13,10 @@ def login(payload: dict):
     password = payload.get("password")
 
     if not email or not password:
-        raise HTTPException(status_code=400, detail="Credenciais inválidas")
+        raise HTTPException(status_code=400, detail="Dados inválidos")
 
     conn = get_sync_conn()
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    cursor = conn.cursor()
 
     cursor.execute(
         "SELECT id, email, password_hash, role FROM users WHERE email = %s",
@@ -29,21 +28,25 @@ def login(payload: dict):
 
     if not user or not bcrypt.checkpw(
         password.encode(),
-        user["password_hash"].encode()
+        user[2].encode()
     ):
-        raise HTTPException(status_code=401, detail="Email ou senha incorretos")
+        raise HTTPException(status_code=401, detail="Credenciais inválidas")
 
-    access_token = create_access_token(
-        data={"sub": str(user["id"]), "role": user["role"]},
-        expires_delta=timedelta(hours=12)
+    token = create_access_token(
+        {
+            "sub": str(user[0]),
+            "email": user[1],
+            "role": user[3],
+        },
+        expires_delta=timedelta(hours=8),
     )
 
     return {
-        "access_token": access_token,
+        "access_token": token,
         "token_type": "bearer",
         "user": {
-            "id": user["id"],
-            "email": user["email"],
-            "role": user["role"],
+            "id": user[0],
+            "email": user[1],
+            "role": user[3],
         },
     }
