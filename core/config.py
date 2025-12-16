@@ -1,5 +1,6 @@
-from pydantic_settings import BaseSettings
 from typing import List
+from pydantic_settings import BaseSettings
+from pydantic import Field
 import json
 
 class Settings(BaseSettings):
@@ -18,12 +19,10 @@ class Settings(BaseSettings):
     TV_PASSWORD: str | None = None
 
     # === CORS ===
-    ALLOWED_ORIGINS: List[str] = ["*"]
+    ALLOWED_ORIGINS: List[str] = Field(default_factory=lambda: ["*"])
 
-    # === SEGURANÇA ===
+    # === AUTH / DB ===
     SECRET_KEY: str | None = None
-
-    # === DATABASE ===
     NEON_DATABASE_URL: str | None = None
 
     # === ADMIN SEED ===
@@ -32,15 +31,6 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
-
-    @classmethod
-    def parse_env_var(cls, field_name: str, raw_value: str):
-        if field_name == "ALLOWED_ORIGINS":
-            try:
-                return json.loads(raw_value)
-            except Exception:
-                return raw_value.split(",")
-        return raw_value
-
+        extra = "ignore"
 
 settings = Settings()
