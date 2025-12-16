@@ -1,3 +1,5 @@
+# utils/admin_seed.py
+
 import bcrypt
 from psycopg2.extras import RealDictCursor
 
@@ -7,25 +9,26 @@ from models.db import get_sync_conn
 
 def seed_admin():
     """
-    Cria o usuário admin automaticamente.
-    Executa apenas se não existir.
+    Cria o usuário admin automaticamente na inicialização.
+    Não recria se já existir.
     """
 
     admin_email = settings.ADMIN_EMAIL
     admin_password = settings.ADMIN_PASSWORD
 
     if not admin_email or not admin_password:
-        print("[ADMIN SEED] Variáveis ADMIN_EMAIL ou ADMIN_PASSWORD ausentes")
+        print("[ADMIN SEED] ADMIN_EMAIL ou ADMIN_PASSWORD não definidos")
         return
 
-    conn = get_sync_conn()
+    conn = None
 
     try:
+        conn = get_sync_conn()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
 
         cursor.execute(
             "SELECT id FROM users WHERE email = %s",
-            (admin_email,)
+            (admin_email,),
         )
 
         if cursor.fetchone():
@@ -40,17 +43,19 @@ def seed_admin():
         cursor.execute(
             """
             INSERT INTO users (email, password_hash, role)
-            VALUES (%s, %s, 'admin')
+            VALUES (%s, %s, %s)
             """,
-            (admin_email, password_hash)
+            (admin_email, password_hash, "admin")
         )
 
         conn.commit()
         print("[ADMIN SEED] Admin criado com sucesso")
 
     except Exception as e:
-        conn.rollback()
         print(f"[ADMIN SEED ERROR] {e}")
+        if conn:
+            conn.rollback()
 
     finally:
-        conn.close()
+        if conn:
+            conn.close()
